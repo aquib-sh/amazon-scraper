@@ -22,10 +22,8 @@ class Browser:
         self.__kernel.send_human_keys(search_box, term)
         search_btn.click()
 
+    def get_page_source(self)
+        return self.__kernel.page_source()
+
     def close(self):
         self.__kernel.shutdown()
-
-if __name__ == "__main__":
-    browser = Browser()
-    browser.goto_homepage()
-    browser.search("walnuts")
