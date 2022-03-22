@@ -22,7 +22,7 @@ class Browser:
         self.__kernel.send_human_keys(search_box, term)
         search_btn.click()
 
-    def get_page_source(self)
+    def get_page_source(self):
         return self.__kernel.page_source()
 
     def close(self):
