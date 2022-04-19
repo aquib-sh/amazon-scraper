@@ -1,9 +1,13 @@
 from bs4 import BeautifulSoup
 
+
 class AmazonParser:
     def __init__(self, source):
         self.source = source
-        self.soup = BeautifulSoup(self.source, 'lxml')
+        if source != None:
+            self.soup = BeautifulSoup(self.source, 'lxml')
+        else:
+            self.soup = None
 
     def update_source(self, source):
         """Updates HTML source and soup"""
@@ -24,7 +28,14 @@ class AmazonParser:
         title = self.soup.find("span", {"id":"productTitle"}).text.strip()
 
         price_symbol = self.soup.find("span", {"class":"a-price-symbol"}).text
-        price = self.soup.find("span", {"class":"a-price-whole"}).text.strip()
+        price_temp = self.soup.find("span", {"class":"a-price-whole"}).text.strip()
+
+        # Add only the numeric chars
+        price = ""
+        for char in price_temp:
+            if char.isnumeric():
+                price += char
+        price = int(price)
 
         # customer ratings is present in the format of 3 out of 5 starts \n total_reviews,
         # for now we don't want the number of total_reviews, so we split it.        
@@ -39,6 +50,8 @@ class AmazonParser:
         # then we create a list from the keys of that dict, the dict contains image url and their resolution
         # we just need the image url which is present in key. We will only select 1st image.
         img_li = self.soup.find("li", {"class":"image"})
+        if img_li == None:
+            img_li = self.soup.find("div", {"id":"img-canvas"})
         disp_img_attr_str = img_li.find("img")['data-a-dynamic-image']
         disp_img_attr = eval(disp_img_attr_str)
         disp_img_list = list(disp_img_attr.keys())

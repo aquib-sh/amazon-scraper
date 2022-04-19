@@ -1,3 +1,6 @@
+import os
+import sys
+
 HOMEPAGE = "https://www.amazon.in"
 
 MAPPINGS = {
@@ -9,3 +12,8 @@ MAPPINGS = {
 
         "selectors":{}
 }
+__path = sys.argv[0]
+__dir = os.path.abspath(os.path.dirname(__path))
+DATA_DIR = os.path.join(__dir, "internal")
+DB_FILE = "products.db"
+DB_PATH = os.path.join(DATA_DIR, DB_FILE)

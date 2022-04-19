@@ -1,5 +1,6 @@
-from bot import BotMaker
 import config
+from bot import BotMaker
+
 
 class Browser:
     def __init__(self):

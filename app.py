@@ -1,49 +1,90 @@
-from os import link
+import sys
 from parser import AmazonParser
 
+import config
 from browser import Browser
+from database.manager import DBManager
 from log import Logger
 
-log = Logger()
-browser = Browser()
-parser = AmazonParser(None)
 
-def run_search():        
-    """Gets a list of links and runs through them."""
-    log.info("Entering Search Method")
-    keyword = input("S> Enter the product name: ")
-    browser.goto_homepage()
+class AmazonScraper:
+    def __init__(self):
+        print("$$$$$$ AMAZON SCRAPER $$$$$$$$")
+        print("Author: Shaikh Aquib\n\n")
+        
+        self.log = Logger()
+        self.db_manager = DBManager(config.DB_PATH)
+        self.browser = Browser() 
+        self.parser = AmazonParser(None)
 
-    log.info(f"Searching for {keyword}")
-    browser.search(keyword, log=0)
-    source = browser.get_page_source()
-    parser.update_source(source)
-    links = parser.get_product_links()
-    log.info(f"Found {len(links)} links with {keyword}")
+        # function mappings
+        self.switch = {
+            1:self.run_search,
+            2:self.run_link,
+            3:sys.exit
+        }
 
-    for link in links:
-        log.info(f"Opening {link}")
-        browser.goto(link)
-        info = parser.get_product_info()
+        self.host = "https://amazon.in/"
 
-def run_link():
-    """Gets the product info through link."""
-    log.info("Entering Link Method")
-    link = input("L> Enter the product link: ")
-    log.info(f"Opening {link}")
+    def __fetch_from_url(self, url):
+        # Opening link in browser and get the HTML source
+        self.log.info(f"Opening {url}")
+        self.browser.goto(url)
+        source = self.browser.get_page_source()
+        self.parser.update_source(source)
+        # Parse the HTML source and get the data
+        info = self.parser.get_product_info()
+        return info
 
-    browser.goto(link)
-    source = browser.get_page_source()
-    parser.update_source(source)
-    info = parser.get_product_info()
+    def __add_to_db(self, info:dict, abs_link):
+        # Add the info to DB
+        self.db_manager.add_product_info(info["title"], info["currency"], info["price"], 
+            info["customer_ratings"], info["image_url"], abs_link
+        )
+        self.log.info(str(info))
+        self.log.info(f"Added record to DB")
 
-# function mappings
-run_choice = {
-    1:run_search,
-    2:run_link
-}
+    def run_search(self):        
+        """Gets a list of links and runs through them."""
+        self.log.info("Entering Search Method")
+        keyword = input("S> Enter the product name: ")
+        self.browser.goto_homepage()
 
-while (True):
-    print("1. Get Product by Searching\n2.Get Product by Link")
-    choice = input("Enter the number corresponding to option")
-    run_choice[choice]()
+        self.log.info(f"Searching for {keyword}")
+        self.browser.search(keyword, log=0)
+        source = self.browser.get_page_source()
+        self.parser.update_source(source)
+        links = self.parser.get_product_links()
+        self.log.info(f"Found {len(links)} links with {keyword}")
+        limit = int(input("How many products do you want to get? "))
+        i = 0
+
+        # Add all the product info uptil limit products
+        for link in links:
+            if i >= limit: 
+                break
+            abs_link = self.host + link
+            info = self.__fetch_from_url(abs_link)
+            self.__add_to_db(info, abs_link)
+            print("\n\n")
+            i += 1
+
+    def run_link(self):
+        """Gets the product info through link."""
+        self.log.info("Entering Link Method")
+        link = input("L> Enter the product link: ")
+        abs_link = self.host + link
+        info = self.__fetch_from_url(abs_link)
+        self.__add_to_db(info, abs_link)
+        print("\n\n")
+    
+    def run(self):
+       while (True):
+            print("1. Get Product by Searching\n2. Get Product by Link\n3. Quit")
+            choice = int(input("Enter the number corresponding to option: "))
+            self.switch[choice]()
+
+if __name__ == "__main__":
+    app = AmazonScraper()
+    app.run()
+        
