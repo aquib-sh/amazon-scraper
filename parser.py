@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-from numpy import disp
 
 class AmazonParser:
     def __init__(self, source):
@@ -7,10 +6,12 @@ class AmazonParser:
         self.soup = BeautifulSoup(self.source, 'lxml')
 
     def update_source(self, source):
+        """Updates HTML source and soup"""
         self.source = source
         self.soup = BeautifulSoup(self.source, 'lxml')
 
-    def get_product_links(self):
+    def get_product_links(self) -> list:
+        """Extracts product links from a search result page and returns a list of links."""
         links = []
         image_elements = self.soup.find_all("span", {"data-component-type":"s-product-image"})
         for elem in image_elements:
